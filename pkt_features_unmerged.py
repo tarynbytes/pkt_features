@@ -270,7 +270,6 @@ def handle_args():
 
     parser = ArgumentParser(description='Turns packet features to CDF graphs')
     parser.add_argument("-i", dest="input_file", required=True, help="(required) input text file", metavar="TXTFILE")
-    parser.add_argument("-o", dest="output_file", required=True, help="(required) output CSV file", metavar="CSVFILE")
     parser.add_argument('-x', dest="x", default=0, type=int, help="(optional) Add first X number of total packets as features.")
     parser.add_argument('-y', dest="y", default=0, type=int, help="(optional) Add first Y number of negative packets as features.")
     parser.add_argument('-z', dest="z", default=0, type=int, help="(optional) Add first Z number of positive packets as features.")
@@ -289,7 +288,7 @@ def main() -> int:
     for website in tqdm(websites, desc="Gathering packet attributes for each website..."):
         website.get_features(args.x, args.y, args.z)
 
-    csv = output_csv(args.output_file, websites, args.x, args.y, args.z)
+    csv = output_csv("pkt_features.csv", websites, args.x, args.y, args.z)
 
     if args.cdfs:
         create_cdfs(csv)
