@@ -6,7 +6,7 @@
 - Optionally takes a sampling of the cumulative sums of packet sizes.
 
 ```
-usage: pkt_features.py [-h] -i TXTFILE -o CSVFILE [-x X] [-y Y] [-z Z] [-csv] [-cdf] [-ml] [-s S] --zeros {True,False}
+usage: pkt_features.py [-h] -i TXTFILE [-x X] [-y Y] [-z Z] [-csv] [-cdf] [-ml] [-s S] --zeros {True,False}
 
 options:
   -h, --help            show this help message and exit
