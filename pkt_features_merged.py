@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import sys
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -337,7 +338,6 @@ def handle_args():
     """Ensures input and output files are passed in as argument."""
     parser = ArgumentParser(description='Turns packet features to CDF graphs')
     parser.add_argument("-i", dest="input_file", required=True, help="(required) input text file", metavar="TXTFILE")
-    parser.add_argument("-o", dest="output_file", required=True, help="(required) output CSV file", metavar="CSVFILE")
     parser.add_argument('-x', dest="x", default=0, type=int, help="(optional) Add first X number of total packets as features.")
     parser.add_argument('-y', dest="y", default=0, type=int, help="(optional) Add first Y number of negative packets as features.")
     parser.add_argument('-z', dest="z", default=0, type=int, help="(optional) Add first Z number of positive packets as features.")
@@ -345,15 +345,16 @@ def handle_args():
     parser.add_argument('-cdf', dest="cdfs", action='store_true', help="(optional) Create CDFs from CSV file.")
     parser.add_argument('-ml', dest="ml", action='store_true', help="(optional) Output to text file all websites in the format of websiteNumber1,feature1,feature2,...")
     parser.add_argument('-s', dest="s", default=0, type=int, help="(optional) Generate samples using size s.")
-    parser.add_argument('--zeros', dest="zeros", choices=["True", "False"], required=True, help="(required with -s flag) Specify whether or not to include packets of size zero in the sampling.")
+    parser.add_argument('--zeros', dest="zeros", choices=["True", "False"], help="(required with -s flag) Specify whether or not to include packets of size zero in the sampling.")
 
     args = parser.parse_args()
 
     if args.s > 0 and not args.zeros:
         parser.error("-s flag requires the use of --zeros flag")
-    
+        sys.exit(0)
     if args.zeros and not args.s:
         parser.error("--zeros flag requires the use of -s flag")
+        sys.exit(0)
 
     return args
 
@@ -366,7 +367,7 @@ def main() -> int:
         website.get_features(args.x, args.y, args.z)
 
     if args.csv:
-        csv = output_csv(args.output_file, websites, args.x, args.y, args.z)
+        csv = output_csv("pkt_features.csv", websites, args.x, args.y, args.z)
 
     if args.cdfs:
         create_cdfs(csv)
