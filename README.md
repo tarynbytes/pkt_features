@@ -11,7 +11,6 @@ usage: pkt_features.py [-h] -i TXTFILE [-x X] [-y Y] [-z Z] [-csv] [-cdf] [-ml] 
 options:
   -h, --help            show this help message and exit
   -i TXTFILE            (required) input text file
-  -o CSVFILE            (required) output CSV file
   -x X                  (optional) Add first X number of total packets as features.
   -y Y                  (optional) Add first Y number of negative packets as features.
   -z Z                  (optional) Add first Z number of positive packets as features.
