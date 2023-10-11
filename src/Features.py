@@ -51,8 +51,8 @@ class Website:
             "cumsum_nonzero": (get_cumsum_nonzero, None),
             "cumsum_neg": (get_cumsum_neg, None),
             "cumsum_pos": (get_cumsum_pos, None),
-            "highest_neg_streak": (get_highest_neg_streak, None),
-            "highest_pos__streak": (get_highest_pos_streak, None),
+            "highest_neg_streak": (get_highest_streaks, None),
+            "highest_pos_streak": (get_highest_streaks, None),
             "total_pkt_size_percentiles": (get_total_pkt_size_percentiles, None),
             "neg_pkt_size_percentiles": (get_neg_pkt_size_percentiles, None),
             "pos_pkt_size_percentiles": (get_pos_pkt_size_percentiles, None),
@@ -75,6 +75,8 @@ class Website:
             func, ret = self.features[feature]
             if not ret:
                 ret = func(self)
+                if ret == "done":
+                    return ret
                 self.features[feature] = (func, ret)
                 return ret
             return ret
@@ -117,49 +119,49 @@ class Website:
         :doc-author: Trelent
         """
         return f"{self.website_number}," \
-               f"{self.avg_pkt_size}," \
-               f"{self.avg_neg_pkt_size}," \
-               f"{self.avg_pos_pkt_size}," \
-               f"{self.total_pkt_size_percentiles[10]}," \
-               f"{self.total_pkt_size_percentiles[25]}," \
-               f"{self.total_pkt_size_percentiles[50]}," \
-               f"{self.total_pkt_size_percentiles[75]}," \
-               f"{self.total_pkt_size_percentiles[90]}," \
-               f"{self.neg_pkt_size_percentiles[10]}," \
-               f"{self.neg_pkt_size_percentiles[25]}," \
-               f"{self.neg_pkt_size_percentiles[50]}," \
-               f"{self.neg_pkt_size_percentiles[75]}," \
-               f"{self.neg_pkt_size_percentiles[90]}," \
-               f"{self.pos_pkt_size_percentiles[10]}," \
-               f"{self.pos_pkt_size_percentiles[25]}," \
-               f"{self.pos_pkt_size_percentiles[50]}," \
-               f"{self.pos_pkt_size_percentiles[75]}," \
-               f"{self.pos_pkt_size_percentiles[90]}," \
-               f"{self.total_pkt_size}," \
-               f"{self.total_neg_pkt_size}," \
-               f"{self.total_pos_pkt_size}," \
-               f"{self.total_num_pkts_including_zeros}," \
-               f"{self.count_positive}," \
-               f"{self.count_negative}," \
-               f"{self.count_zeros}," \
-               f"{self.total_num_pkts_excluding_zeros}," \
-               f"{self.smallest_pkt_size}," \
-               f"{self.largest_pkt_size}," \
-               f"{self.count_unique_pkt_sizes}," \
-               f"{self.highest_neg_streak}," \
-               f"{self.highest_pos_streak}," \
-               f"{self.standard_dev_total}," \
-               f"{self.standard_dev_neg}," \
-               f"{self.standard_dev_pos}," \
-               f"{','.join(map(str, self.first_x))}," \
-               f"{','.join(map(str, self.first_neg_y))}," \
-               f"{','.join(map(str, self.first_pos_z))}," \
-               f"{','.join(map(str, self.cumsum_all))}," \
-               f"{','.join(map(str, self.cumsum_nonzero))}," \
-               f"{','.join(map(str, self.cumsum_neg))}," \
-               f"{','.join(map(str, self.cumsum_pos))}"\
-               f"{','.join(map(str, self.sample_with_zeros))}"\
-               f"{','.join(map(str, self.sample_with_zeros))}"
+               f"{self.features['avg_pkt_size']}," \
+               f"{self.features['avg_neg_pkt_size']}," \
+               f"{self.features['avg_pos_pkt_size']}," \
+               f"{self.features['total_pkt_size_percentiles'][10]}," \
+               f"{self.features['total_pkt_size_percentiles'][25]}," \
+               f"{self.features['total_pkt_size_percentiles'][50]}," \
+               f"{self.features['total_pkt_size_percentiles'][75]}," \
+               f"{self.features['total_pkt_size_percentiles'][90]}," \
+               f"{self.features['neg_pkt_size_percentiles'][10]}," \
+               f"{self.features['neg_pkt_size_percentiles'][25]}," \
+               f"{self.features['neg_pkt_size_percentiles'][50]}," \
+               f"{self.features['neg_pkt_size_percentiles'][75]}," \
+               f"{self.features['neg_pkt_size_percentiles'][90]}," \
+               f"{self.features['pos_pkt_size_percentiles'][10]}," \
+               f"{self.features['pos_pkt_size_percentiles'][25]}," \
+               f"{self.features['pos_pkt_size_percentiles'][50]}," \
+               f"{self.features['pos_pkt_size_percentiles'][75]}," \
+               f"{self.features['pos_pkt_size_percentiles'][90]}," \
+               f"{self.features['total_pkt_size']}," \
+               f"{self.features['total_neg_pkt_size']}," \
+               f"{self.features['total_pos_pkt_size']}," \
+               f"{self.features['total_num_pkts_including_zeros']}," \
+               f"{self.features['count_positive']}," \
+               f"{self.features['count_negative']}," \
+               f"{self.features['count_zeros']}," \
+               f"{self.features['total_num_pkts_excluding_zeros']}," \
+               f"{self.features['smallest_pkt_size']}," \
+               f"{self.features['largest_pkt_size']}," \
+               f"{self.features['count_unique_pkt_sizes']}," \
+               f"{self.features['highest_neg_streak']}," \
+               f"{self.features['highest_pos_streak']}," \
+               f"{self.features['standard_dev_total']}," \
+               f"{self.features['standard_dev_neg']}," \
+               f"{self.features['standard_dev_pos']}," \
+               f"{','.join(map(str, self.features['first_x']))}," \
+               f"{','.join(map(str, self.features['first_neg_y']))}," \
+               f"{','.join(map(str, self.features['first_pos_z']))}," \
+               f"{','.join(map(str, self.features['cumsum_all']))}," \
+               f"{','.join(map(str, self.features['cumsum_nonzero']))}," \
+               f"{','.join(map(str, self.features['cumsum_neg']))}," \
+               f"{','.join(map(str, self.features['cumsum_pos']))}" \
+               f"{','.join(map(str, self.features['sample_with_zeros']))}" \
+               f"{','.join(map(str, self.features['sample_with_zeros']))}"
 
     @property
     def number(self):
@@ -404,29 +406,41 @@ class Website:
         return self.get_feature("count_unique_pkt_sizes")
 
     @property
-    def highest_neg_streak(self):
-        """
-        The highest_neg_streak function returns the highest negative streak of a given stock.
+    def highest_streaks(self):
+        n_func, n_val = self.features["highest_neg_streak"]
+        p_func, p_val = self.features["highest_pos_streak"]
 
+        if not n_val or not p_val:
+            neg, pos = self.get_feature("highest_streaks")
+            self.features["highest_neg_streak"] = (n_func, neg)
+            self.features["highest_pos_streak"] = (p_func, pos)
 
-        :param self: Represent the instance of the class
-        :return: The highest negative streak of the player
-        :doc-author: Trelent
-        """
-        return self.get_feature("highest_neg_streak")
+        return "done"
 
-    @property
-    def highest_pos_streak(self):
+    # @property
+    # def highest_neg_streak(self):
+    #     """
+    #     The highest_neg_streak function returns the highest negative streak of a given stock.
+    #
+    #
+    #     :param self: Represent the instance of the class
+    #     :return: The highest negative streak of the player
+    #     :doc-author: Trelent
+    #     """
+    #     return self.get_feature("highest_neg_streak")
 
-        """
-        The highest_pos_streak function returns the highest positive streak of a given stock.
-            The function takes in a stock object and returns an integer value representing the highest positive streak.
-
-        :param self: Refer to the object itself
-        :return: The highest positive streak of the stock
-        :doc-author: Trelent
-        """
-        return self.get_feature("highest_pos_streak")
+    # @property
+    # def highest_pos_streak(self):
+    #
+    #     """
+    #     The highest_pos_streak function returns the highest positive streak of a given stock.
+    #         The function takes in a stock object and returns an integer value representing the highest positive streak.
+    #
+    #     :param self: Refer to the object itself
+    #     :return: The highest positive streak of the stock
+    #     :doc-author: Trelent
+    #     """
+    #     return self.get_feature("highest_pos_streak")
 
     @property
     def standard_dev_total(self):
@@ -938,7 +952,7 @@ def get_pos_pkt_size_percentiles(website: Website):
     return get_percentiles(website, website.pos_packets)
 
 
-def get_highest_neg_streak(website: Website):
+def get_highest_streaks(website: Website):
     """
     The get_highest_neg_streak function takes a website object as an argument and returns the highest negative streak
     for that website. If the max_streaks attribute of the website is not set, it will call
@@ -953,23 +967,6 @@ def get_highest_neg_streak(website: Website):
         max_neg, max_pos = get_highest_positive_and_negative_streaks(website)
         website.max_streaks = (max_neg, max_pos)
     return max_neg
-
-
-def get_highest_pos_streak(website: Website):
-    """
-    The get_highest_pos_streak function takes a website object as an argument and returns the highest positive streak
-    for that website. If the max_streaks attribute of the website is not set, it calls get_highest_positive_and_negative
-    streaks to calculate both streaks and then sets them on the object.
-
-    :param website: Website: Pass the website object to the function
-    :return: The highest positive streak of a website
-    :doc-author: Trelent
-    """
-    max_neg, max_pos = website.max_streaks
-    if not max_neg or not max_pos:
-        max_neg, max_pos = get_highest_positive_and_negative_streaks(website)
-        website.max_streaks = (max_neg, max_pos)
-    return max_pos
 
 
 def get_highest_positive_and_negative_streaks(website: Website):
