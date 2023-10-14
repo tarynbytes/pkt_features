@@ -1,10 +1,8 @@
 import pytest
-import statistics
-import pandas as pd
 from random import randrange
 
-from ..src.Features import *
-from ..src.Packet_Feature_Generator import *
+from pkt_feature_lib.src.Features import *
+from pkt_feature_lib.src.Packet_Feature_Generator import *
 
 
 @pytest.fixture
@@ -354,3 +352,29 @@ def test_validate_generate_features(website):
 # I highly suggest that you implement some tests here that check that the correct string is getting generated
 # As of now we know that most of your functions are working correclty however you are not sure they are coming out
 # as expected to be written into a file.
+
+class TestGetHighestPositiveAndNegativeStreaks:
+
+    #  Test with a website object that has only positive packets
+    def test_positive_packets(self):
+        website = Website(1, [1, 2, 3, 4, 5], (1, 2, 3), 5)
+        result = get_highest_positive_and_negative_streaks(website)
+        assert result == (0, 5)
+
+    #  Test with a website object that has only negative packets
+    def test_negative_packets(self):
+        website = Website(1, [-1, -2, -3, -4, -5], (1, 2, 3), 5)
+        result = get_highest_positive_and_negative_streaks(website)
+        assert result == (5, 0)
+
+    #  Test with a website object that has both positive and negative packets
+    def test_mixed_packets(self):
+        website = Website(1, [1, -2, 3, -4, 5], (1, 2, 3), 5)
+        result = get_highest_positive_and_negative_streaks(website)
+        assert result == (1, 2)
+
+    #  Test with a website object that has one packet
+    def test_single_packet(self):
+        website = Website(1, [1], (1, 2, 3), 1)
+        result = get_highest_positive_and_negative_streaks(website)
+        assert result == (0, 0)

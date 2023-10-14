@@ -1,18 +1,15 @@
-#!../venv/bin/python
-
+# !../venv/bin/python
 import csv
-import os
+import json
 from argparse import ArgumentParser
-from ast import literal_eval as line_to_array
 from collections import defaultdict
+from concurrent.futures import ProcessPoolExecutor
 from queue import PriorityQueue
-from threading import Thread
 
 import matplotlib.pyplot as plt
-import pandas as pd
 from tqdm import tqdm
 
-from .Features import Website
+from Features import *
 
 X, Y, Z = 0, 0, 0
 
@@ -49,45 +46,49 @@ def handle_args():
 
     args = parser.parse_args()
 
-    global X, Y, Z
-    X, Y, Z = int(args.x), int(args.y), int(args.z)
-
     return args
 
 
-def process_file(args) -> PriorityQueue[Website]:
+def process_file(args, x, y, z) -> PriorityQueue[Website]:
     """
     The process_file function takes in a file path and parses the data into Website objects.
         The function returns a PriorityQueue of Website objects sorted by their priority score.
 
     :param args: Pass in the command line arguments
+    :param x: Value of X
+    :param y: Value of Y
+    :param z: Value of Z
     :return: A priorityqueue of website objects
     :doc-author: Trelent
     """
 
-    global X, Y, Z
     websites = PriorityQueue()
     with open(args.input_file, 'r') as fp:
-        for line in tqdm(fp.readlines(), desc="Parsing Data File Into Website Objects"):
-            parsed_line = line_to_array(line)
-            websites.put(Website(parsed_line[0], parsed_line[1:], (X, Y, Z), args.s))
+        for line in tqdm(fp, desc="Parsing Data File Into Website Objects"):
+            parsed_line = json.loads(line)
+            websites.put(Website(parsed_line[0], parsed_line[1:], (x, y, z), args.s))
     return websites
 
 
-def work_features(in_list: list[Website], out_list: list[Website]):
+def work_features(in_list: list[Website]) -> list[Website]:
     """
     The work_features function takes a list of Website objects and generates features for each one.
-    It then appends the website to an output list, which is returned at the end of the function.
+    It then returns a new list of websites with their features generated.
 
     :param in_list: list[Website]: Specify the type of the input list
-    :param out_list: list[Website]: Pass the list of websites back to the main thread
-    :return: A list of websites with their features generated
+    :return: A new list of websites with their features generated
     :doc-author: Trelent
     """
 
+    result_list = []
     for website in tqdm(in_list, "Generating Features in thread"):
-        website.generate_features()
-        out_list.append(website)
+        try:
+            website.generate_features()
+        except Exception as e:
+            print(f"Error generating features for website {website.website_number}: {str(e)}")
+        result_list.append(website)
+
+    return result_list
 
 
 def split(a, n):
@@ -103,44 +104,45 @@ def split(a, n):
     :return: A list of lists
     :doc-author: Trelent
     """
+    if n == 0:
+        raise ValueError("n cannot be zero")
+    if n > len(a):
+        raise ValueError("n cannot be greater than the length of a")
+    if not a:
+        raise ValueError("List 'a' must be non-empty")
+    if not isinstance(n, int) or n <= 0:
+        raise ValueError("n must be a positive integer")
+
     k, m = divmod(len(a), n)
     return (a[i * k + min(i, m):(i + 1) * k + min(i + 1, m)] for i in range(n))
 
 
-def generate_features(websites: PriorityQueue[Website], num_threads: int = 8) -> PriorityQueue[Website]:
+def generate_features(websites: list[Website], num_threads: int = 8) -> list[Website]:
     """
-    The generate_features function takes in a PriorityQueue of websites and the number of threads to use.
+    The generate_features function takes in a list of websites and the number of threads to use.
     It then splits the list into num_threads sublists, each containing roughly equal numbers of websites.
     Each thread is given one sublist to work on, and they all run simultaneously using multithreading.
     The results are appended back together into a single list which is returned.
 
-    :param websites: PriorityQueue[Website]: Pass in the websites that need to be processed
+    :param websites: list[Website]: Pass in the websites that need to be processed
     :param num_threads: int: Specify the number of threads to be used in the function
-    :return: A priorityqueue of websites with the features generated
+    :return: A list of websites with the features generated
     :doc-author: Trelent
     """
+    if not isinstance(websites, list) or not all(isinstance(website, Website) for website in websites):
+        raise ValueError("websites must be a list of Website objects")
+    if not isinstance(num_threads, int) or num_threads <= 0:
+        raise ValueError("num_threads must be a positive integer")
 
-    processed_websites = PriorityQueue()
+    processed_websites = []
 
-    website_list = []
-    for website in range(websites.qsize()):
-        website_list.append(websites.get())
+    nested_list = list(split(websites, num_threads))
+    [list() for _ in range(num_threads)]
 
-    nested_list = list(split(website_list, num_threads))
-    result_lists = [[] for _ in range(num_threads)]
-    threads = []
-
-    for i in range(num_threads):
-        thread = Thread(target=work_features, args=(nested_list[i], result_lists[i]))
-        thread.start()
-        threads.append(thread)
-
-    for thread in threads:
-        thread.join()
-
-    result_list = [item for sublist in result_lists for item in sublist]
-    for website in result_list:
-        processed_websites.put(website)
+    with ProcessPoolExecutor(max_workers=num_threads) as executor:
+        for result in list(executor.map(work_features, nested_list)):
+            result_list = list(result)
+            processed_websites.extend(result_list)
 
     return processed_websites
 
@@ -148,7 +150,7 @@ def generate_features(websites: PriorityQueue[Website], num_threads: int = 8) ->
 def create_outfile(file_name: str):
     """
     The create_outfile function creates a new empty file.
-        If the file already exists, it is deleted and then recreated.
+        If the file already exists, it is overwritten.
 
         Args:
             file_name (str): The name of the output file to be created.
@@ -158,24 +160,24 @@ def create_outfile(file_name: str):
     :doc-author: Trelent
     """
 
-    if os.path.exists(file_name):
-        os.remove(file_name)
-        print(f"Deleted the existing file: {file_name}")
-
     try:
-        with open(file_name, 'w'):
+        with open(file_name, 'w+'):
             pass  # This creates an empty file
         print(f"Created a new empty file: {file_name}")
-    except Exception as e:
+    except FileNotFoundError as e:
         print(f"Error creating a new file: {e}")
+        raise
+    except PermissionError as e:
+        print(f"Error creating a new file: {e}")
+        raise
 
 
-def output_csv(in_queue: PriorityQueue[Website]):
+def output_csv(in_list: list[Website]):
     """
     The output_csv function takes in a queue of Website objects and outputs a CSV file
 
-    :param in_queue: PriorityQueue[Website]: Pass the queue
-    :return: The file path to the output
+    :param in_list: list[Website]: Specify the type of data that is being passed into the function
+    :return: A string that is the file path to the output csv file
     :doc-author: Trelent
     """
 
@@ -225,10 +227,8 @@ def output_csv(in_queue: PriorityQueue[Website]):
                  'Sample Size',
                  'Sample With Zeros',
                  'Sample Without Zeros']]
-    pbar = tqdm(total=in_queue.qsize(), desc="Creating CSV file")
 
-    for _ in range(in_queue.qsize()):
-        website = in_queue.get()
+    for website in tqdm(in_list, desc="Creating CSV file"):
         csv_data.append([
             website.number, website.avg_pkt_size,
             website.avg_neg_pkt_size,
@@ -274,13 +274,9 @@ def output_csv(in_queue: PriorityQueue[Website]):
             website.sample_size,
             website.sample_with_zeros,
             website.sample_without_zeros])
-        in_queue.task_done()
-        pbar.update(1)
-    pbar.close()
 
-    file_path = "output/output.csv"
-    create_outfile(file_path)
-    with open(file_path, 'w', newline='') as fp:
+    file_path = "output.csv"
+    with open(file_path, 'w+', newline='') as fp:
         writer = csv.writer(fp)
         writer.writerows(csv_data)
 
@@ -313,31 +309,26 @@ def create_cdfs(csv_path: str):
         plt.close()
 
 
-def write_list_to_file(in_queue: PriorityQueue[Website]):
+def write_list_to_file(in_list: list[Website]):
     """
     The write_list_to_file function takes a PriorityQueue of Website objects and writes them to an output file. The
     function creates the output file if it does not exist, and overwrites the contents of the file if it does exist.
     The function uses tqdm to display a progress bar while writing each Website object in string form to the output
     file.
 
-    :param in_queue: PriorityQueue[Website]: Pass in the priorityqueue of website objects
+    :param in_list: PriorityQueue[Website]: Pass in the priorityqueue of website objects
     :return: Nothing
     :doc-author: Trelent
     """
 
     file_path = "output/output.ml"
-    create_outfile(file_path)
-    pbar = tqdm(total=in_queue.qsize(), desc="Writing List to File")
 
-    with open(file_path, 'w') as fp:
-        for _ in range(in_queue.qsize()):
-            website = in_queue.get()
+    with open(file_path, 'w+') as fp:
+        for website in tqdm(in_list, desc="Writing List to File"):
             fp.write(f"{str(website)}\n")
-            in_queue.task_done()
-            pbar.update(1)
 
 
-def equalize_output(websites: PriorityQueue[Website]):
+def equalize_output(websites: list[Website]):
     """
     The equalize_output function takes in a PriorityQueue of Website objects and returns a new PriorityQueue
     of Website objects. The returned queue will contain only those websites that have at least X total packets,
@@ -349,19 +340,16 @@ def equalize_output(websites: PriorityQueue[Website]):
     """
 
     global X, Y, Z
-    out_queue = PriorityQueue()
-    pbar = tqdm(total=websites.qsize(), desc="Equalizing Websites")
+    out_list = []
 
-    for _ in range(websites.qsize()):
-        website = websites.get()
+    for website in tqdm(websites, desc="Equalizing Websites"):
         if website.total_num_pkts_including_zeros >= X and website.count_negative >= Y and website.count_positive >= Z:
-            out_queue.put(website)
-        pbar.update(1)
-        websites.task_done()
-    return out_queue
+            out_list.append(website)
+
+    return out_list
 
 
-def create_sample_file(websites: PriorityQueue[Website], include_zero: bool = True):
+def create_sample_file(websites: list[Website], include_zero: bool = True):
     """
     The create_sample_file function takes in a PriorityQueue of Website objects and an optional boolean value. The
     function then iterates through the queue, creating a list of samples that have more than one sample for each
@@ -377,8 +365,7 @@ def create_sample_file(websites: PriorityQueue[Website], include_zero: bool = Tr
 
     samples = []
 
-    for _ in range(websites.qsize()):
-        website: Website = websites.get()
+    for website in tqdm(websites, desc="Collecting Websites to Sample"):
 
         if include_zero:
             length = website.total_num_pkts_including_zeros
@@ -386,22 +373,21 @@ def create_sample_file(websites: PriorityQueue[Website], include_zero: bool = Tr
         else:
             length = website.total_num_pkts_excluding_zeros
 
-        websites.task_done()
         if length < website.sample_size:
             continue
 
         samples.append(website)
 
     counts = defaultdict(int)
-    for sample in samples:
+    for sample in tqdm(samples, desc="Sampling Websites"):
         counts[str(sample.website_number)] += 1
 
-    samples = [sample for sample in samples if counts[str(sample.website_number)] > 1]
+    samples = [sample for sample in tqdm(samples, desc="Filtering Samples") if counts[str(sample.website_number)] > 1]
 
-    path = "output/samples.txt"
+    path = "samples.txt"
     create_outfile(path)
     with open(path, "w+") as fp:
-        for sample in samples:
+        for sample in tqdm(samples, desc="Writing Samples to file"):
             if include_zero:
                 samples = sample.sample_with_zeros
             else:
@@ -418,8 +404,15 @@ def main():
     """
 
     args = handle_args()
-    websites = process_file(args)
-    web_features = generate_features(websites, args.num_threads)
+
+    websites = process_file(args, args.x, args.y, args.z)
+    web_list = []
+
+    while websites.qsize() != 0:
+        web_list.append(websites.get())
+        websites.task_done()
+
+    web_features = generate_features(web_list, args.num_threads)
 
     if args.csv:
         output_csv(web_features)
