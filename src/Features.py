@@ -405,18 +405,6 @@ class Website:
         return self.get_feature("count_unique_pkt_sizes")
 
     @property
-    def highest_streaks(self):
-        n_func, n_val = self.features["highest_neg_streak"]
-        p_func, p_val = self.features["highest_pos_streak"]
-
-        if not n_val or not p_val:
-            neg, pos = self.get_feature("highest_streaks")
-            self.features["highest_neg_streak"] = (n_func, neg)
-            self.features["highest_pos_streak"] = (p_func, pos)
-
-        return "done"
-
-    @property
     def highest_neg_streak(self):
         """
         The highest_neg_streak function returns the highest negative streak of a given stock.
@@ -963,7 +951,7 @@ def get_highest_neg_streak(website: Website):
     :doc-author: Trelent
     """
 
-    val = website.features["highest_neg_streak"]
+    func, val = website.features["highest_neg_streak"]
     if not val:
         neg, pos = get_highest_positive_and_negative_streaks(website)
         website.features["highest_neg_streak"] = (get_highest_neg_streak, neg)

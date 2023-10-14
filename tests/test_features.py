@@ -298,26 +298,59 @@ def test_get_highest_positive_and_negative_streaks(website):
     assert max_neg_streak == neg
 
 
+def test_website_properties(website):
+    assert website.number == website.website_number
+    assert website.neg_packets == get_neg_packets(website)
+    assert website.pos_packets == get_pos_packets(website)
+    assert website.avg_pkt_size == get_avg_pkt_size(website)
+    assert website.non_zero_packets == get_non_zero_packets(website)
+    assert website.avg_neg_pkt_size == get_avg_neg_pkt_size(website)
+    assert website.avg_pos_pkt_size == get_avg_pos_pkt_size(website)
+    assert website.total_pkt_size_percentiles == get_total_pkt_size_percentiles(website)
+    assert website.neg_pkt_size_percentiles == get_neg_pkt_size_percentiles(website)
+    assert website.pos_pkt_size_percentiles == get_pos_pkt_size_percentiles(website)
+    assert website.total_pkt_size == get_total_pkt_size(website)
+    assert website.total_pos_pkt_size == get_total_pos_pkt_size(website)
+    assert website.total_neg_pkt_size == get_total_neg_pkt_size(website)
+    assert website.total_num_pkts_including_zeros == get_num_pkts_with_zeros(website)
+    assert website.count_positive == get_count_positive(website)
+    assert website.count_negative == get_count_negative(website)
+    assert website.count_zeros == get_count_zeros(website)
+    assert website.total_num_pkts_excluding_zeros == get_num_pkts_no_zeros(website)
+    assert website.smallest_pkt_size == get_smallest_pkt_size(website)
+    assert website.largest_pkt_size == get_largest_pkt_size(website)
+    assert website.count_unique_pkt_sizes == get_count_unique_pkt_sizes(website)
+    assert website.highest_neg_streak == get_highest_neg_streak(website)
+    assert website.highest_pos_streak == get_highest_pos_streak(website)
+    assert website.standard_dev_total == get_standard_dev_total(website)
+    assert website.standard_dev_neg == get_standard_dev_neg(website)
+    assert website.standard_dev_pos == get_standard_dev_pos(website)
+    assert website.first_x == get_first_x(website)
+    assert website.first_neg_y == get_first_neg_y(website)
+    assert website.first_pos_z == get_first_pos_z(website)
+    assert website.cumsum_all == get_cumsum_all(website)
+    assert website.cumsum_nonzero == get_cumsum_nonzero(website)
+    assert website.cumsum_neg == get_cumsum_neg(website)
+    assert website.cumsum_pos == get_cumsum_pos(website)
+    assert website.sample_with_zeros == get_sample_with_zeros(website)
+    assert website.sample_without_zeros == get_sample_without_zeros(website)
 
 
+def test_validate_features(website):
+    for key, tup in website.features.items():
+        assert True == isinstance(tup, tuple)
+        assert len(tup) == 2
+        assert tup[0] is not None
 
 
+def test_validate_generate_features(website):
+    website.generate_features()
+    for key, val in website.features.items():
+        assert True == isinstance(val, tuple)
+        assert val[0] is not None
+        assert val[1] is not None
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# I highly suggest that you implement some tests here that check that the correct string is getting generated
+# As of now we know that most of your functions are working correclty however you are not sure they are coming out
+# as expected to be written into a file.
