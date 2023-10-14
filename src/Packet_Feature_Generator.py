@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm import tqdm
 
-from Features import Website
+from .Features import Website
 
 X, Y, Z = 0, 0, 0
 
@@ -278,7 +278,7 @@ def output_csv(in_queue: PriorityQueue[Website]):
         pbar.update(1)
     pbar.close()
 
-    file_path = "../output/output.csv"
+    file_path = "output/output.csv"
     create_outfile(file_path)
     with open(file_path, 'w', newline='') as fp:
         writer = csv.writer(fp)
@@ -325,7 +325,7 @@ def write_list_to_file(in_queue: PriorityQueue[Website]):
     :doc-author: Trelent
     """
 
-    file_path = "../output/output.ml"
+    file_path = "output/output.ml"
     create_outfile(file_path)
     pbar = tqdm(total=in_queue.qsize(), desc="Writing List to File")
 
@@ -398,7 +398,7 @@ def create_sample_file(websites: PriorityQueue[Website], include_zero: bool = Tr
 
     samples = [sample for sample in samples if counts[str(sample.website_number)] > 1]
 
-    path = "../output/samples.txt"
+    path = "output/samples.txt"
     create_outfile(path)
     with open(path, "w+") as fp:
         for sample in samples:

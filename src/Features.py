@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import statistics
 
 
 class Website:
@@ -798,7 +799,7 @@ def get_standard_dev_total(website: Website):
     :doc-author: Trelent
     """
 
-    return (pd.DataFrame(website.packets)).std().values[0]
+    return statistics.stdev(website.packets)
 
 
 def get_standard_dev_neg(website: Website):
@@ -811,7 +812,7 @@ def get_standard_dev_neg(website: Website):
     :return: The standard deviation of the negative packets
     :doc-author: Trelent
     """
-    return (pd.DataFrame(website.neg_packets)).std().values[0]
+    return statistics.stdev(website.neg_packets)
 
 
 def get_standard_dev_pos(website: Website):
@@ -824,7 +825,7 @@ def get_standard_dev_pos(website: Website):
     :return: The standard deviation of the number of positive packets for a given website
     :doc-author: Trelent
     """
-    return (pd.DataFrame(website.pos_packets)).std().values[0]
+    return statistics.stdev(website.pos_packets)
 
 
 def get_first_x(website: Website):
