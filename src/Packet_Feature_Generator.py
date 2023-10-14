@@ -1,16 +1,18 @@
 #!../venv/bin/python
 
-import sys
-from argparse import ArgumentParser
-from Features import Website
-from ast import literal_eval as line_to_array
-from tqdm import tqdm
-from threading import Thread, Lock
-from queue import PriorityQueue
-import os
 import csv
+import os
+from argparse import ArgumentParser
+from ast import literal_eval as line_to_array
+from collections import defaultdict
+from queue import PriorityQueue
+from threading import Thread
+
 import matplotlib.pyplot as plt
 import pandas as pd
+from tqdm import tqdm
+
+from Features import Website
 
 X, Y, Z = 0, 0, 0
 
@@ -18,7 +20,7 @@ X, Y, Z = 0, 0, 0
 def handle_args():
     """
     The handle_args function is used to parse the command line arguments.
-    It takes no parameters and returns an object containing all of the command line arguments.
+    It takes no parameters and returns an object containing all the command line arguments.
     The function uses argparse, a Python module that makes it easy to write user-friendly
     command-line interfaces.
 
@@ -50,13 +52,6 @@ def handle_args():
     global X, Y, Z
     X, Y, Z = int(args.x), int(args.y), int(args.z)
 
-    # if args.s > 0 and not args.zeros:
-    #     parser.error("-s flag requires the use of --zeros flag")
-    #     sys.exit(-1)
-    # if args.zeros and not args.s:
-    #     parser.error("--zeros flag requires the use of -s flag")
-    #     sys.exit(-1)
-
     return args
 
 
@@ -74,19 +69,6 @@ def work_features(in_list: list[Website], out_list: list[Website]):
     for website in tqdm(in_list, "Generating Features in thread"):
         website.generate_features()
         out_list.append(website)
-
-
-def work_samples(in_queue: PriorityQueue[Website], out_queue: PriorityQueue[Website], lock: Lock, pbar):
-    while not in_queue.empty():
-        website = in_queue.get()
-        website.generate_samples()
-
-        if in_queue.qsize() % 1000 == 0:
-            with lock:
-                pbar.update(1)
-
-        out_queue.put(website)
-        in_queue.task_done()
 
 
 def split(a, n):
@@ -126,7 +108,7 @@ def create_outfile(file_name: str):
         print(f"Deleted the existing file: {file_name}")
 
     try:
-        with open(file_name, 'w') as new_file:
+        with open(file_name, 'w'):
             pass  # This creates an empty file
         print(f"Created a new empty file: {file_name}")
     except Exception as e:
@@ -288,8 +270,40 @@ def equalize_output(websites: PriorityQueue[Website]):
     return out_queue
 
 
-def create_sample_file(websites: PriorityQueue[Website]):
-    pass
+def create_sample_file(websites: PriorityQueue[Website], include_zero: bool = True):
+    samples = []
+
+    for _ in range(websites.qsize()):
+        website: Website = websites.get()
+
+        if include_zero:
+            length = website.total_num_pkts_including_zeros
+
+        else:
+            length = website.total_num_pkts_excluding_zeros
+
+        websites.task_done()
+        if length < website.sample_size:
+            continue
+
+        samples.append(website)
+
+    counts = defaultdict(int)
+    for sample in samples:
+        counts[str(sample.website_number)] += 1
+
+    samples = [sample for sample in samples if counts[str(sample.website_number)] > 1]
+
+    path = "../output/samples.txt"
+    create_outfile(path)
+    with open(path, "w+") as fp:
+        for sample in samples:
+            if include_zero:
+                samples = sample.sample_with_zeros
+            else:
+                samples = sample.sample_without_zeros
+
+            fp.write(f"{sample.website_number},{','.join(map(str, (round(value) for value in samples)))}\n")
 
 
 def main():

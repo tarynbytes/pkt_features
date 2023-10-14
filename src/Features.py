@@ -51,8 +51,8 @@ class Website:
             "cumsum_nonzero": (get_cumsum_nonzero, None),
             "cumsum_neg": (get_cumsum_neg, None),
             "cumsum_pos": (get_cumsum_pos, None),
-            "highest_neg_streak": (get_highest_streaks, None),
-            "highest_pos_streak": (get_highest_streaks, None),
+            "highest_neg_streak": (get_highest_neg_streak, None),
+            "highest_pos_streak": (get_highest_pos_streak, None),
             "total_pkt_size_percentiles": (get_total_pkt_size_percentiles, None),
             "neg_pkt_size_percentiles": (get_neg_pkt_size_percentiles, None),
             "pos_pkt_size_percentiles": (get_pos_pkt_size_percentiles, None),
@@ -71,15 +71,13 @@ class Website:
         :return: The value of the feature
         :doc-author: Trelent
         """
-        if feature in self.features.keys():
-            func, ret = self.features[feature]
-            if not ret:
-                ret = func(self)
-                if ret == "done":
-                    return ret
-                self.features[feature] = (func, ret)
-                return ret
+
+        func, ret = self.features[feature]
+        if not ret:
+            ret = func(self)
+            self.features[feature] = (func, ret)
             return ret
+        return ret
 
     def generate_features(self):
         """
@@ -417,30 +415,30 @@ class Website:
 
         return "done"
 
-    # @property
-    # def highest_neg_streak(self):
-    #     """
-    #     The highest_neg_streak function returns the highest negative streak of a given stock.
-    #
-    #
-    #     :param self: Represent the instance of the class
-    #     :return: The highest negative streak of the player
-    #     :doc-author: Trelent
-    #     """
-    #     return self.get_feature("highest_neg_streak")
+    @property
+    def highest_neg_streak(self):
+        """
+        The highest_neg_streak function returns the highest negative streak of a given stock.
 
-    # @property
-    # def highest_pos_streak(self):
-    #
-    #     """
-    #     The highest_pos_streak function returns the highest positive streak of a given stock.
-    #         The function takes in a stock object and returns an integer value representing the highest positive streak.
-    #
-    #     :param self: Refer to the object itself
-    #     :return: The highest positive streak of the stock
-    #     :doc-author: Trelent
-    #     """
-    #     return self.get_feature("highest_pos_streak")
+
+        :param self: Represent the instance of the class
+        :return: The highest negative streak of the player
+        :doc-author: Trelent
+        """
+        return self.get_feature("highest_neg_streak")
+
+    @property
+    def highest_pos_streak(self):
+
+        """
+        The highest_pos_streak function returns the highest positive streak of a given stock.
+            The function takes in a stock object and returns an integer value representing the highest positive streak.
+
+        :param self: Refer to the object itself
+        :return: The highest positive streak of the stock
+        :doc-author: Trelent
+        """
+        return self.get_feature("highest_pos_streak")
 
     @property
     def standard_dev_total(self):
@@ -556,7 +554,7 @@ class Website:
     @property
     def sample_with_zeros(self):
         """
-        The sample_with_zeros function is used to determine whether or not the model should sample from a
+        The sample_with_zeros function is used to determine whether the model should sample from a
         zero-inflated distribution. If this function returns True, then the model will sample from a zero-inflated
         distribution. If this function returns False, then the model will not sample from a zero-inflated distribution.
 
@@ -699,7 +697,7 @@ def get_avg_neg_pkt_size(website: Website):
     :doc-author: Trelent
     """
 
-    return website.total_neg_pkt_size / len(website.neg_packets)
+    return website.total_neg_pkt_size / website.count_negative
 
 
 def get_avg_pos_pkt_size(website: Website):
@@ -712,7 +710,7 @@ def get_avg_pos_pkt_size(website: Website):
     :return: The average positive packet size of a website
     :doc-author: Trelent
     """
-    return website.total_pos_pkt_size / len(website.pos_packets)
+    return website.total_pos_pkt_size / website.count_positive
 
 
 def get_count_negative(website: Website):
@@ -952,21 +950,44 @@ def get_pos_pkt_size_percentiles(website: Website):
     return get_percentiles(website, website.pos_packets)
 
 
-def get_highest_streaks(website: Website):
+def get_highest_neg_streak(website: Website):
     """
-    The get_highest_neg_streak function takes a website object as an argument and returns the highest negative streak
-    for that website. If the max_streaks attribute of the website is not set, it will call
-    get_highest_positive_and_negative streaks to calculate both positive and negative streaks for that site.
+    The get_highest_neg_streak function takes in a website object and returns the highest negative streak of that
+    website. The function first checks if the value is already stored in the features dictionary, if it is then it
+    returns that value. If not, then it calls get_highest_positive_and_negative_streaks to get both values at once
+    and stores them into their respective keys before returning the negative streak.
 
-    :param website: Website: Pass the website object into the function
-    :return: The highest negative streak for a given website
+    :param website: Website: Pass in the website object
+    :return: The highest negative streak of a website
     :doc-author: Trelent
     """
-    max_neg, max_pos = website.max_streaks
-    if not max_neg or not max_pos:
-        max_neg, max_pos = get_highest_positive_and_negative_streaks(website)
-        website.max_streaks = (max_neg, max_pos)
-    return max_neg
+
+    val = website.features["highest_neg_streak"]
+    if not val:
+        neg, pos = get_highest_positive_and_negative_streaks(website)
+        website.features["highest_neg_streak"] = (get_highest_neg_streak, neg)
+        website.features["highest_pos_streak"] = (get_highest_pos_streak, pos)
+        return neg
+    return val
+
+
+def get_highest_pos_streak(website: Website):
+    """
+    The get_highest_pos_streak function returns the highest positive streak of a website.
+
+
+    :param website: Website: Pass in the website object
+    :return: The highest positive streak of a website
+    :doc-author: Trelent
+    """
+
+    func, val = website.features["highest_pos_streak"]
+    if not val:
+        neg, pos = get_highest_positive_and_negative_streaks(website)
+        website.features["highest_neg_streak"] = (get_highest_neg_streak, neg)
+        website.features["highest_pos_streak"] = (get_highest_pos_streak, pos)
+        return pos
+    return val
 
 
 def get_highest_positive_and_negative_streaks(website: Website):
@@ -1040,7 +1061,7 @@ def get_sample_without_zeros(website: Website):
     packets from that website. The function first calculates the step size, which is equal to the total number of
     packets excluding zeros divided by the sample size. Then it creates an array called steps that contains all
     integers from 1 to the total number of packets excluding zeros with increments equal to step_size. Finally,
-    it uses numpy's interp function to return a new array containing values interpolated between each pair in steps
+    it uses numpy interp function to return a new array containing values interpolated between each pair in steps
     and non_zero_packets.
 
     :param website: Website: Pass in the website object
