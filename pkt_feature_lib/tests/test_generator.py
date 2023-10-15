@@ -194,3 +194,4 @@ class TestCreateOutfile:
         assert os.path.exists(file_name)
         assert os.stat(file_name).st_size == 0
         os.remove(file_name)
+
