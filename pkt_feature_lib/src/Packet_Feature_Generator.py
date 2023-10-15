@@ -1,4 +1,5 @@
-# !../venv/bin/python
+# !../venv/bin/python3
+
 import concurrent.futures
 import csv
 import json
@@ -7,8 +8,11 @@ from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from .Features import *
 
+try:
+    from .Features import *
+except Exception:
+    from Features import *
 
 def handle_args():
     """
