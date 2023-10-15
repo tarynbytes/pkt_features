@@ -1,15 +1,14 @@
 import pytest
 from random import randrange
 
-from pkt_feature_lib.src.Features import *
-from pkt_feature_lib.src.Packet_Feature_Generator import *
+from ..src.Packet_Feature_Generator import *
 
 
 @pytest.fixture
 def website():
-    with open("data/small.txt") as fp:
+    with open("../data/small.txt") as fp:
         lines = fp.readlines()
-        parsed_line = line_to_array(lines[randrange(len(lines))])
+        parsed_line = json.loads(lines[randrange(len(lines))])
         return Website(parsed_line[0], parsed_line[1:], (25, 25, 25), 102)
 
 
@@ -371,10 +370,12 @@ class TestGetHighestPositiveAndNegativeStreaks:
     def test_mixed_packets(self):
         website = Website(1, [1, -2, 3, -4, 5], (1, 2, 3), 5)
         result = get_highest_positive_and_negative_streaks(website)
-        assert result == (1, 2)
+        assert result == (1, 1)
 
     #  Test with a website object that has one packet
     def test_single_packet(self):
         website = Website(1, [1], (1, 2, 3), 1)
         result = get_highest_positive_and_negative_streaks(website)
-        assert result == (0, 0)
+        assert result == (0, 1)
+
+

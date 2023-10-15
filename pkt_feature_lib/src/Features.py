@@ -90,6 +90,7 @@ class Website:
         :return: The features of the dataframe
         :doc-author: Trelent
         """
+
         for feature in self.features.keys():
             self.get_feature(feature)
 
@@ -121,7 +122,7 @@ class Website:
                f"{self.features['avg_pkt_size']}," \
                f"{self.features['avg_neg_pkt_size']}," \
                f"{self.features['avg_pos_pkt_size']}," \
-               f"{self.features['total_pkt_size_percentiles'][10]}," \
+               f"{self.features['total_pkt_size_percentiles'][1][10]}," \
                f"{self.features['total_pkt_size_percentiles'][25]}," \
                f"{self.features['total_pkt_size_percentiles'][50]}," \
                f"{self.features['total_pkt_size_percentiles'][75]}," \
