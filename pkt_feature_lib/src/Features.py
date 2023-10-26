@@ -18,6 +18,7 @@ class Website:
         :return: A dictionary with keys that are strings and values that are tuples of functions
         :doc-author: Trelent
         """
+        self.equalized = True
         self.website_number = website_number
         self.packets = packets
         self.percentiles = [10, 25, 50, 75, 90]
@@ -118,50 +119,51 @@ class Website:
         :return: A string that contains the values of all the attributes
         :doc-author: Trelent
         """
-        return f"{self.website_number}," \
-               f"{self.features['avg_pkt_size']}," \
-               f"{self.features['avg_neg_pkt_size']}," \
-               f"{self.features['avg_pos_pkt_size']}," \
+        return f"[{self.website_number}," \
+               f"{self.features['avg_pkt_size'][1]}," \
+               f"{self.features['avg_neg_pkt_size'][1]}," \
+               f"{self.features['avg_pos_pkt_size'][1]}," \
                f"{self.features['total_pkt_size_percentiles'][1][10]}," \
-               f"{self.features['total_pkt_size_percentiles'][25]}," \
-               f"{self.features['total_pkt_size_percentiles'][50]}," \
-               f"{self.features['total_pkt_size_percentiles'][75]}," \
-               f"{self.features['total_pkt_size_percentiles'][90]}," \
-               f"{self.features['neg_pkt_size_percentiles'][10]}," \
-               f"{self.features['neg_pkt_size_percentiles'][25]}," \
-               f"{self.features['neg_pkt_size_percentiles'][50]}," \
-               f"{self.features['neg_pkt_size_percentiles'][75]}," \
-               f"{self.features['neg_pkt_size_percentiles'][90]}," \
-               f"{self.features['pos_pkt_size_percentiles'][10]}," \
-               f"{self.features['pos_pkt_size_percentiles'][25]}," \
-               f"{self.features['pos_pkt_size_percentiles'][50]}," \
-               f"{self.features['pos_pkt_size_percentiles'][75]}," \
-               f"{self.features['pos_pkt_size_percentiles'][90]}," \
-               f"{self.features['total_pkt_size']}," \
-               f"{self.features['total_neg_pkt_size']}," \
-               f"{self.features['total_pos_pkt_size']}," \
-               f"{self.features['total_num_pkts_including_zeros']}," \
-               f"{self.features['count_positive']}," \
-               f"{self.features['count_negative']}," \
-               f"{self.features['count_zeros']}," \
-               f"{self.features['total_num_pkts_excluding_zeros']}," \
-               f"{self.features['smallest_pkt_size']}," \
-               f"{self.features['largest_pkt_size']}," \
-               f"{self.features['count_unique_pkt_sizes']}," \
-               f"{self.features['highest_neg_streak']}," \
-               f"{self.features['highest_pos_streak']}," \
-               f"{self.features['standard_dev_total']}," \
-               f"{self.features['standard_dev_neg']}," \
-               f"{self.features['standard_dev_pos']}," \
-               f"{','.join(map(str, self.features['first_x']))}," \
-               f"{','.join(map(str, self.features['first_neg_y']))}," \
-               f"{','.join(map(str, self.features['first_pos_z']))}," \
-               f"{','.join(map(str, self.features['cumsum_all']))}," \
-               f"{','.join(map(str, self.features['cumsum_nonzero']))}," \
-               f"{','.join(map(str, self.features['cumsum_neg']))}," \
-               f"{','.join(map(str, self.features['cumsum_pos']))}" \
-               f"{','.join(map(str, self.features['sample_with_zeros']))}" \
-               f"{','.join(map(str, self.features['sample_with_zeros']))}"
+               f"{self.features['total_pkt_size_percentiles'][1][25]}," \
+               f"{self.features['total_pkt_size_percentiles'][1][50]}," \
+               f"{self.features['total_pkt_size_percentiles'][1][75]}," \
+               f"{self.features['total_pkt_size_percentiles'][1][90]}," \
+               f"{self.features['neg_pkt_size_percentiles'][1][10]}," \
+               f"{self.features['neg_pkt_size_percentiles'][1][25]}," \
+               f"{self.features['neg_pkt_size_percentiles'][1][50]}," \
+               f"{self.features['neg_pkt_size_percentiles'][1][75]}," \
+               f"{self.features['neg_pkt_size_percentiles'][1][90]}," \
+               f"{self.features['pos_pkt_size_percentiles'][1][10]}," \
+               f"{self.features['pos_pkt_size_percentiles'][1][25]}," \
+               f"{self.features['pos_pkt_size_percentiles'][1][50]}," \
+               f"{self.features['pos_pkt_size_percentiles'][1][75]}," \
+               f"{self.features['pos_pkt_size_percentiles'][1][90]}," \
+               f"{self.features['total_pkt_size'][1]}," \
+               f"{self.features['total_neg_pkt_size'][1]}," \
+               f"{self.features['total_pos_pkt_size'][1]}," \
+               f"{self.features['total_num_pkts_including_zeros'][1]}," \
+               f"{self.features['count_positive'][1]}," \
+               f"{self.features['count_negative'][1]}," \
+               f"{self.features['count_zeros'][1]}," \
+               f"{self.features['total_num_pkts_excluding_zeros'][1]}," \
+               f"{self.features['smallest_pkt_size'][1]}," \
+               f"{self.features['largest_pkt_size'][1]}," \
+               f"{self.features['count_unique_pkt_sizes'][1]}," \
+               f"{self.features['highest_neg_streak'][1]}," \
+               f"{self.features['highest_pos_streak'][1]}," \
+               f"{self.features['standard_dev_total'][1]}," \
+               f"{self.features['standard_dev_neg'][1]}," \
+               f"{self.features['standard_dev_pos'][1]}," \
+               f"{','.join(map(str, self.features['first_x'][1]))}," \
+               f"{','.join(map(str, self.features['first_neg_y'][1]))}," \
+               f"{','.join(map(str, self.features['first_pos_z'][1]))}," \
+               #f"{','.join(map(str, self.features['sample_with_zeros'][1]))}," \
+               #f"{','.join(map(str, self.features['sample_without_zeros'][1]))}]"               
+               #f"{','.join(map(str, self.features['cumsum_all'][1]))}," \
+               #f"{','.join(map(str, self.features['cumsum_nonzero'][1]))}," \
+               #f"{','.join(map(str, self.features['cumsum_neg'][1]))}," \
+               #f"{','.join(map(str, self.features['cumsum_pos'][1]))}" \
+
 
     @property
     def number(self):
@@ -826,7 +828,10 @@ def get_first_x(website: Website):
     :return: The first x packets of the website
     :doc-author: Trelent
     """
-    return website.packets[:website.x]
+    out_list = website.packets[:website.x]
+    if len(out_list) < website.x:
+        website.equalized = False
+    return out_list
 
 
 def get_first_neg_y(website: Website):
@@ -839,7 +844,10 @@ def get_first_neg_y(website: Website):
     :return: The first y negative packets from the website
     :doc-author: Trelent
     """
-    return website.neg_packets[:website.y]
+    out_list = website.neg_packets[:website.y]
+    if len(out_list) < website.y:
+        website.equalized = False
+    return out_list
 
 
 def get_first_pos_z(website: Website):
@@ -851,8 +859,10 @@ def get_first_pos_z(website: Website):
     :return: The first z packets of the website
     :doc-author: Trelent
     """
-    return website.pos_packets[:website.z]
-
+    out_list =  website.pos_packets[:website.z]
+    if len(out_list) < website.z:
+        website.equalized = False
+    return out_list
 
 def get_cumsum_all(website: Website):
     """
@@ -1040,9 +1050,13 @@ def get_sample_with_zeros(website: Website):
     :return: A sample of the website's packets with zeros added in between them
     :doc-author: Trelent
     """
-    step_size = website.total_num_pkts_including_zeros / website.sample_size
-    steps = np.arange(1, website.total_num_pkts_including_zeros, step_size)
-    return np.interp(steps, np.arange(website.total_num_pkts_including_zeros), website.packets).tolist()
+
+    step_size = len(website.cumsum_all) / website.sample_size
+    steps = np.arange(0, len(website.cumsum_all), step_size)
+    out_list = np.interp(steps, np.arange(len(website.cumsum_all)), website.cumsum_all).tolist()
+    if len(out_list) < website.sample_size:
+        website.equalized = False
+    return out_list[:website.sample_size]
 
 
 def get_sample_without_zeros(website: Website):
@@ -1058,6 +1072,10 @@ def get_sample_without_zeros(website: Website):
     :return: A sample of the non-zero packets
     :doc-author: Trelent
     """
-    step_size = website.total_num_pkts_excluding_zeros / website.sample_size
-    steps = np.arange(1, website.total_num_pkts_excluding_zeros, step_size)
-    return np.interp(steps, np.arange(website.total_num_pkts_excluding_zeros), website.non_zero_packets).tolist()
+
+    step_size = len(website.cumsum_nonzero) / website.sample_size
+    steps = np.arange(0, len(website.cumsum_nonzero), step_size)
+    out_list = np.interp(steps, np.arange(len(website.cumsum_nonzero)), website.cumsum_nonzero).tolist()
+    if len(out_list) < website.sample_size:
+        website.equalized = False
+    return out_list[:website.sample_size]
