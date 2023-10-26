@@ -40,8 +40,7 @@ def handle_args():
                              "feature2,...")
     parser.add_argument('-s', dest="s", default=102, type=int, help="(optional) Generate samples using size s.")
     parser.add_argument('--zeros', dest="zeros", choices=["True", "False"],
-                        help="(required with -s flag) Specify whether or not to include packets of size zero in the "
-                             "sampling.")
+                        help="(required with -s flag) Specify whether to out samplings including zeros or excluding zeros.")
     parser.add_argument('-j', dest="num_threads", help="define the number of threads to run with", default=4, type=int)
 
     args = parser.parse_args()
@@ -196,15 +195,17 @@ def output_csv(in_list: list[Website], args: Namespace):
                  f'First {args.x} Packets',
                  f'First {args.y} Negative Packets',
                  f'First {args.z} Positive Packets',
-                 'Cumulative Sum (including zeros)',
-                 'Cumulative Sum (excluding zeros)',
-                 'Cumulative Sum Negatives',
-                 'Cumulative Sum Positives',
+                 #'Cumulative Sum (including zeros)',
+                 #'Cumulative Sum (excluding zeros)',
+                 #'Cumulative Sum Negatives',
+                 #'Cumulative Sum Positives',
                  'Sample Size',
                  'Sample With Zeros',
                  'Sample Without Zeros']]
 
     for website in tqdm(in_list, desc="Creating CSV file"):
+        if not website.equalized:
+            continue
         csv_data.append([
             website.number, website.avg_pkt_size,
             website.avg_neg_pkt_size,
@@ -243,15 +244,15 @@ def output_csv(in_list: list[Website], args: Namespace):
             website.first_x,
             website.first_neg_y,
             website.first_pos_z,
-            website.cumsum_all,
-            website.cumsum_nonzero,
-            website.cumsum_neg,
-            website.cumsum_pos,
+            #website.cumsum_all,
+            #website.cumsum_nonzero,
+            #website.cumsum_neg,
+            #website.cumsum_pos,
             website.sample_size,
             website.sample_with_zeros,
             website.sample_without_zeros])
 
-    file_path = "output.csv"
+    file_path = "output/output.csv"
     with open(file_path, 'w+', newline='') as fp:
         writer = csv.writer(fp)
         writer.writerows(csv_data)
@@ -280,12 +281,12 @@ def create_cdfs(csv_path: str):
         plt.title(f'CDF for ({column})')
         plt.grid(True)
 
-        save_path = f'../output/cdf_{column}.png'
+        save_path = f'output/cdf_{column}.png'
         plt.savefig(save_path)
         plt.close()
 
 
-def write_list_to_file(in_list: list[Website]):
+def write_list_to_file(in_list: list[Website], zeros:bool):
     """
     The write_list_to_file function takes a list of Website objects and writes them to the output. Ml file in the
     output directory.
@@ -298,77 +299,13 @@ def write_list_to_file(in_list: list[Website]):
 
     with open(file_path, 'w+') as fp:
         for website in tqdm(in_list, desc="Writing List to File"):
-            fp.write(f"{str(website)}\n")
-
-
-def equalize_output(websites: list[Website], args: Namespace):
-    """
-    The equalize_output function takes in a PriorityQueue of Website objects and returns a new PriorityQueue
-        of Website objects. The returned queue will contain only those websites that have at least X total packets,
-        Y negative packets, and Z positive packets. This is done to ensure that the training data is balanced.
-
-    :param websites: list[Website]: Pass in a list of website objects
-    :param args: Pass in the arguments from the command line
-    :return: A list of websites that have at least x total packets,
-    :doc-author: Trelent
-    """
-
-    out_list = []
-
-    for website in tqdm(websites, desc="Equalizing Websites"):
-        if website.total_num_pkts_including_zeros >= args.x and \
-                website.count_negative >= args.y and \
-                website.count_positive >= args.z:
-            out_list.append(website)
-
-    return out_list
-
-
-def create_sample_file(websites: list[Website], include_zero: bool = True):
-    """
-    The create_sample_file function takes in a PriorityQueue of Website objects and an optional boolean value. The
-        function then iterates through the queue, creating a list of samples that have more than one sample for each
-        website. If the include_zero parameter is set to True, then it will use the total number of packets including
-        zeros as its length for sampling purposes. Otherwise, it will use the total number of packets excluding zeros as
-        its length for sampling purposes. It then writes these samples to a file
-
-    :param websites: list[Website]: Pass in a queue of websites
-    :param include_zero: bool: Determine whether to include zero packets in the sample
-    :return: A list of samples
-    :doc-author: Trelent
-    """
-
-    samples = []
-    for website in tqdm(websites, desc="Collecting Websites to Sample"):
-
-        if include_zero:
-            length = website.total_num_pkts_including_zeros
-
-        else:
-            length = website.total_num_pkts_excluding_zeros
-
-        if length < website.sample_size:
-            continue
-
-        samples.append(website)
-
-    counts = defaultdict(int)
-    for sample in tqdm(samples, desc="Sampling Websites"):
-        counts[str(sample.website_number)] += 1
-
-    samples = [sample for sample in tqdm(samples, desc="Filtering Samples") if counts[str(sample.website_number)] > 1]
-
-    path = "samples.txt"
-    create_outfile(path)
-    with open(path, "w+") as fp:
-        for sample in tqdm(samples, desc="Writing Samples to file"):
-            if include_zero:
-                samples = sample.sample_with_zeros
-            else:
-                samples = sample.sample_without_zeros
-
-            fp.write(f"{sample.website_number},{','.join(map(str, (round(value) for value in samples)))}\n")
-
+            if True == website.equalized:
+                if zeros is True:
+                    fp.write(f"{str(website)}{','.join(map(str, website.features['sample_with_zeros'][1]))}]\n")
+                else:
+                    fp.write(f"{str(website)}{','.join(map(str, website.features['sample_without_zeros'][1]))}]\n")
+            else: 
+                continue
 
 def main():
     """
@@ -391,12 +328,8 @@ def main():
         create_cdfs(csv_path)
 
     if args.ml:
-        web_equalized = equalize_output(web_features, args)
-        write_list_to_file(web_equalized)
-
-    if args.s:
-        create_sample_file(web_features)
-
+        write_list_to_file(web_features, args.zeros)
+    
 
 if __name__ == "__main__":
     main()
